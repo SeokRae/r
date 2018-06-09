@@ -1,0 +1,71 @@
+---
+title: "weather"
+author: "seok"
+date: "2018년 6월 9일"
+output:
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 날씨 데이터를 이용한 회귀분석
+## 로지스틱 회귀분석
+### 로지스틱 회귀분석이란
+ - 종속변수와 독립변수 간의 관계를 나타내어 예측 모델을 생성한다는 점에서 선형회귀분석과 동일
+ - 독립변수(x)에 의해서 종속변수(y)의 범주로 분류한다는 측면은 분류분석 방법으로 분류된다.
+
+### 로지스틱 회귀분석의 특징
+ - 분석 목적 : 종속변수와 독립변수 간의 관계를 통해서 예측 모델을 생성하는 데 있다.
+ - 회귀분석과 차이점: 종속변수는 반드시 범주형 변수이어야 한다.
+ - 정규성: 정규분대신에 이항분포를 따른다.
+ - 로짓 변환 : 종속변수의 출력범위를 0과 1로 조정하는 과정을 의미
+ - 활용 분야 : 의료, 통신, 날씨 등 다양한 분야에서 활용
+
+```{r weather}
+weather = read.csv("../data/weather.csv", stringsAsFactors = F)
+# 데이터 확인
+weather
+```
+
+## 날씨 데이터 분석
+
+### 데이터 가져오기
+```{r weather}
+attributes(weather) # 변수 속성 보기
+
+summary(weather) # 데이터 요약 보기
+
+dim(weather) # 데이터 객체의 차원보기
+
+head(weather) # 상위 6개 관측치 미리보기
+
+tail(weather) # 하위 6개 관측치 미리보기
+
+str(weather) # 데이터 구조, 변수 개수, 변수 명, 관찰치 개수, 관찰치의 미리보기
+
+length(weather$Date) # 데이터 객체의 요소들의 개수
+
+names(weather) # 데이터 객체 구성요소 이름
+
+class(weather) # 데이터 객체 구성요소의 속성
+
+sapply(weather, class) # 각 컬럼당 데이터 타입 확인
+```
+
+
+ - 날씨 데이터의 분석을 위해 x, y 변수를 결정
+ - y(독립변수) 변수를 대상으로 로짓 변환하여 로지스틱 회귀분석을 위한 환경을 마련
+ 
+### 데이터 준비
+```{r}
+weather_df <- weather[, c(-1, -6, -8, -14)]
+
+str(weather_df) # 컬럼 삭제 후 확인
+```
+

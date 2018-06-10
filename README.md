@@ -39,7 +39,7 @@ RainTomorrow(내일 비 여부)
 - 변수 간의 관련성을 분석하기 위해 사용하는 분석방법
 - 날씨 데이터를 피어슨 상관계수, 히스토그램, 산점도행렬을 통해 분석
 
-
+![img](https://t1.daumcdn.net/cfile/tistory/9948B4395B1DB0BD15)
 
 ### 3. 예측 분석
 
@@ -51,9 +51,12 @@ RainTomorrow(내일 비 여부)
 
 - 독립 변수의 선형 결합을 이용하여 사건의 발생 가능성을 예측하는데 사용되는 통계 기법
 
-
+![img](https://t1.daumcdn.net/cfile/tistory/999DB1335B1DB0BD18) 
 
 #### 3 - 2 분류분석
 
 - 다수의 변수를 갖는 데이터 셋을 대상으로 특정 변수의 값을 조건으로 지정하여 데이터를 분류하고 트리 형태의 모델을 생성하는 분석방법
 
+![img](https://t1.daumcdn.net/cfile/tistory/994656425B1DB0BD12) 
+
+![img](https://t1.daumcdn.net/cfile/tistory/99BDDA3A5B1DB0BD14) 

@@ -14,29 +14,46 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# 날씨 데이터를 이용한 회귀분석
-## 로지스틱 회귀분석
-### 로지스틱 회귀분석이란
- - 종속변수와 독립변수 간의 관계를 나타내어 예측 모델을 생성한다는 점에서 선형회귀분석과 동일
- - 독립변수(x)에 의해서 종속변수(y)의 범주로 분류한다는 측면은 분류분석 방법으로 분류된다.
+# 추론 통계 분석
+ - 모집단에서 추출한 표본의 정보를 이용하여 모집단의 특성을 추론하는 추론 통계학
+ 
+## 날씨 데이터의 상관관계 분석
+ - 변수들의 상관성을 바탕으로 변수를 정제하는 상관관계 분석
+```{text}
+ - 회귀분석에서 변수 간의 인과관계를 분석하기 전에 변수 간의 관련성을 분석하는 선행자료(가설검정 전 수행)로 이
+ - 변수 간의 관련성은 상관계수인 피어슨(Pearson) R 계수를 이용해 관련성의 유무와 정도를 파악
+ - 상관관계 분석의 척도인 피어슨 상관계수(Pearson correlation coefficient : r) R과 상관관계의 정도
 
-### 로지스틱 회귀분석의 특징
- - 분석 목적 : 종속변수와 독립변수 간의 관계를 통해서 예측 모델을 생성하는 데 있다.
- - 회귀분석과 차이점: 종속변수는 반드시 범주형 변수이어야 한다.
- - 정규성: 정규분대신에 이항분포를 따른다.
- - 로짓 변환 : 종속변수의 출력범위를 0과 1로 조정하는 과정을 의미
- - 활용 분야 : 의료, 통신, 날씨 등 다양한 분야에서 활용
+피어슨 상관계수 R 
++-0.9이상 > 매우 높은 상관관계
++-0.9 ~ +-0.7 > 높은 상관관계
++-0.7 ~ +-0.4 > 다소 높은 상관관계
++-0.4 ~ +-0.2 > 낮은 상관관계
++-0.2미만 > 상관관계 없음
+```
 
+### 데이터 호출
+
+ - 날씨 관련 변수에 따라서 비가 내릴지의 여부를 기록한 데이터
+ - 이 데이터를 분석하여 어떤 날씨 조건에 비가 내릴지 또는 내리지 않을지에 대한 판단 기준을 분석할 수 있다.
+ - Date(측정날짜), MinTemp(최저기온), MaxTemp(최고기온), Rainfall(강수량), Sunshine(햇빛)
+ - WindGustDir(돌풍방향), WidGustSpeed(돌풍 속도), WindDir(바람 방향), WindSpeed(바람 속도)
+ - Humidity(습도), Pressure(기압), Cloud(구름), Temp(온도), RainToday(금일 비 여부), RainTomorrow(내일 비 여부)
+ 
 ```{r}
 weather = read.csv("../data/weather.csv", stringsAsFactors = F)
 # 데이터 확인
 weather
-```
+``` 
 
-## 날씨 데이터 분석
-
-### 데이터 가져오기
+### 데이터 확인 방법
 ```{r}
+length(weather$Date) # 데이터 객체의 요소들의 개수
+
+names(weather) # 데이터 객체 구성요소 이름
+
+class(weather) # 데이터 객체 구성요소의 속성
+
 attributes(weather) # 변수 속성 보기
 
 summary(weather) # 데이터 요약 보기
@@ -48,20 +65,120 @@ head(weather) # 상위 6개 관측치 미리보기
 tail(weather) # 하위 6개 관측치 미리보기
 
 str(weather) # 데이터 구조, 변수 개수, 변수 명, 관찰치 개수, 관찰치의 미리보기
-
-length(weather$Date) # 데이터 객체의 요소들의 개수
-
-names(weather) # 데이터 객체 구성요소 이름
-
-class(weather) # 데이터 객체 구성요소의 속성
-
 ```
 
- - 날씨 관련 변수에 따라서 비가 내릴지의 여부를 기록한 데이터
- - 이 데이터를 분석하여 어떤 날씨 조건에 비가 내릴지 또는 내리지 않을지에 대한 판단 기준을 분석할 수 있다.
- - Date(측정날짜), MinTemp(최저기온), MaxTemp(최고기온), Rainfall(강수량), Sunshine(햇빛)
- - WindGustDir(돌풍방향), WidGustSpeed(돌풍 속도), WindDir(바람 방향), WindSpeed(바람 속도)
- - Humidity(습도), Pressure(기압), Cloud(구름), Temp(온도), RainToday(금일 비 여부), RainTomorrow(내일 비 여부)
+### 데이터 전처리
+```{r}
+weather_num <- weather[, c(-1, -6, -8, -14, -15)]
+str(weather_num)
+# 결측치 확인
+colSums(is.na(weather_num))
+```
+
+### 상관계수 확인
+```{r}
+# cor(weather) # numeric 데이터만 가능
+cor(weather_num, method = "pearson") # 상관관계 확인
+```
+
+### 데이터 전처리 2
+```{r}
+weather_num2 <- na.omit(weather_num) # 결측치 제거
+
+colSums(is.na(weather_num2)) # 결측치 제거 확인
+```
+
+### Pairs() 함수를 이용하여 산점도 행렬을 그리기 위해 사용자 정의함수 사용
+```{r}
+# help("pairs")에서 참고한 함수들
+# 산점도 행렬의 대각선에 히스토그램을 추가하는 사용자 정의 함수
+panel.hist <- function(x, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5) )
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks; nB <- length(breaks)
+  y <- h$counts; y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "cyan", ...)
+} 
+
+# 다음으로 산점도 행렬의 위쪽에 상관계수 숫자를 집어넣는 사용자 정의 함수
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste0(prefix, txt)
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex.cor * r)
+} 
+
+# 산점도에 선형 회귀선을 추가하는 사용자 정의 함수
+panel.lm <- function(x, y, col=par("col"), bg=NA, pch=par("pch"), 
+                     cex=1, col.smooth="black", ...) {
+  points(x, y, pch=pch, col=col, bg=bg, cex=cex) 
+  abline(stats::lm(y~x), col=col.smooth, ...)
+} 
+```
+
+### 산점도 행렬(scatter-plot matrix), 상관계수(correlation), 히스토그램(histogram)
+```{r}
+pairs(
+  weather_num2,
+  lower.panel = panel.lm,
+  upper.panel = panel.cor,
+  diag.panel = panel.hist,
+  pch="*",
+  main = "산점도 행렬, 상관계수 , 히스토그램"
+)
+
+pairs(
+  weather_num2,
+  pch=21,
+  bg=rainbow(10)
+)
+```
+
+### 데이터 전처리 3
+```{r}
+# 관련이 있는 데이터만 다시 전처리
+weather_num3 <- weather_num2[, c(-3)]
+```
+
+### 산점도 행렬(scatter-plot matrix), 상관계수(correlation), 히스토그램(histogram) 2
+```{r}
+# cor(weather_num3, method="pearson") # 대상변수가 등간척도 또는 비율척도 일 때 pearson 상관계수를 적용
+# cor(weather_num3, method="spearman") # 서열척도일 때는 spearman 상관계수를 적용
+pairs(
+  weather_num3,
+  lower.panel = panel.lm,
+  upper.panel = panel.cor,
+  diag.panel = panel.hist,
+  pch=21,
+  bg=rainbow(5)
+)
+```
+
+# 예측 분석
+ - 추론 통계 및 패턴(규칙)을 적용하여 미래의 데이터를 예측하는 분석방법
+ 
+## 로지스틱 회귀분석
+ - 종속변수와 독립변수 간의 관계를 나타내어 예측 모델을 생성한다는 점에서 선형회귀분석과 동일
+ - 독립변수(x)에 의해서 종속변수(y)의 범주로 분류한다는 측면은 분류분석 방법으로 분류된다.
+
+### 로지스틱 회귀분석의 특징
+ - 분석 목적 : 종속변수와 독립변수 간의 관계를 통해서 예측 모델을 생성하는 데 있다.
+ - 단순 회귀분석과 차이점: 종속변수는 반드시 범주형 변수이어야 한다.
+ - 정규성: 정규분대신에 이항분포를 따른다.
+ - 로짓 변환 : 종속변수의 출력범위를 0과 1로 조정하는 과정을 의미
+ - 활용 분야 : 의료, 통신, 날씨 등 다양한 분야에서 활용
+
+### 데이터 확인
+```{r}
+str(weather) # 데이터 구조, 변수 개수, 변수 명, 관찰치 개수, 관찰치의 미리보기
+
+```
 
 ### 데이터 전처리 
  - 날씨 데이터의 분석을 위해 x, y 변수를 결정
@@ -69,11 +186,11 @@ class(weather) # 데이터 객체 구성요소의 속성
  
 #### 결측치 확인
 ```{r}
-sum(is.na(weather)) # 전체 결측치 갯수 확인
-sum(is.na(weather$Sunshine)) # Sunshine 컬럼의 결측치 갯수 확인
-sum(is.na(weather$WindGustDir)) # WindGustDir 컬럼의 결측치 갯수 확인
-sum(is.na(weather$WindGustSpeed)) # WindGustSpeed 컬럼의 결측치 갯수 확인
-sum(is.na(weather$WindDir)) # WindDir 컬럼의 결측치 갯수 확인
+# sum(is.na(weather)) # 전체 결측치 갯수 확인
+# sum(is.na(weather$Sunshine)) # Sunshine 컬럼의 결측치 갯수 확인
+# sum(is.na(weather$WindGustDir)) # WindGustDir 컬럼의 결측치 갯수 확인
+# sum(is.na(weather$WindGustSpeed)) # WindGustSpeed 컬럼의 결측치 갯수 확인
+# sum(is.na(weather$WindDir)) # WindDir 컬럼의 결측치 갯수 확인
 
 colSums(is.na(weather)) # 한번에 결측값 현황 파악하는 방법
 ```
@@ -81,12 +198,12 @@ colSums(is.na(weather)) # 한번에 결측값 현황 파악하는 방법
 #### 데이터 변환
 ```{r}
 weather_df <- weather[, c(-1, -6, -8, -14)] # chr 데이터 타입 컬럼, Date, RainToday 컬럼 제거
-
 str(weather_df) # 컬럼 삭제 후 확인
 
 weather_df$RainTomorrow[weather_df$RainTomorrow=="Yes"] <- 1 # Yes -> 1
 weather_df$RainTomorrow[weather_df$RainTomorrow=="No"] <- 0 # Tes -> 0
 weather_df$RainTomorrow <- as.numeric(weather_df$RainTomorrow) # 수정한 값을 numeric으로 형변환
+
 ```
 
 #### 데이터 확인
@@ -110,17 +227,20 @@ test <- weather_df[-idx, ]
 # glm(y ~ x, data, family)
 # family의 'binomial'은 y 변수가 이항형인 경우 지정하는 속성 값
 weather_model <- glm(RainTomorrow ~ ., data=train, family="binomial")
-weather_model
+# weather_model
 summary(weather_model)
 ```
-
+ - 표의 가장 우측 열의 p-value가 0.05보다 낮은 변수가 통계적으로 유의하다.
+ - Sunshine, WindGustSpeed, Humidity, Pressure
+ - 가장 낮은 Pressure의 p-value가 가장 낮은 것으로 보아 예측력이 좀 더 강한 것으로 보인다.
+ 
 ### 로지스틱 회귀모델 예측치 생성
 ```{r}
 # newdata=test : 새로운 데이터 셋, type="response" : 0~1 확률값으로 예측 
 pred <- predict(weather_model, newdata=test, type="response")
-pred
-summary(pred)
-str(pred)
+pred # 1에 가까울 수록 비올 확률이 높다.
+# summary(pred)
+# str(pred)
 # 예측치 : 0과 1로 변환(0.5 기준)
 result_pred <- ifelse(pred >= 0.5, 1, 0)
 result_pred
@@ -138,7 +258,7 @@ table(result_pred, test$RainTomorrow)
 ## result_pred  0  1
 ##           0 83 13
 ##           1  1 12
-(88 + 9) / nrow(test)
+(83 + 12) / nrow(test)
 ```
  - 모델의 예측치와 검정데이터의 y 변수를 이용하여 혼돈 매트릭스를 생성
  - 이를 토대로 모델의 분류정확도를 계산할 수 있다.
@@ -157,17 +277,37 @@ plot(prf)
 
  - ROC 곡선에서 왼쪽 상단의 계단 모양의 빈공백만큼이 분류정확도에서 오분류(missing)를 나타낸다.
  
-# 날씨 데이터를 이용한 비 유무 예측
-## rpart()를 이용한 분류 분석
+## 분류분석
+ - 다수의 변수를 갖는 데이터 셋을 대상으로 특정 변수의 값을 조건으로 지정하여 데이터를 분류하고 트리 형태의 모델을 생성하는 분석방법
+
+### 분류분석의 특징
+ - y변수 존재: 설명변수(x 변수)와 반응변수(y 변수)가 존재한다.
+ - 의사결정트리: 분류예측모델에 의해서 의사결정트리 형태로 데이터가 분류된다.
+ - 비모수 검정: 선형성, 정규성, 등분산성 가정이 필요 없다.
+ - 추론 기능: 유의수준 판단 기준이 없다.(추론 기능 없음)
+ - 활용 분야: 대출은행에서 고객의 신용상태, 병원에서 환자의 종양 검사를 바탕으로 종양의 악성 또는 양성 여부
+ 
+### 분류분석의 절차
+ 1. 기존의 알려진 데이터를 수집하여 학습데이터(학습 표본)를 생성한다.
+ 2. 수집된 학습데이터를 대상으로 분류 알고리즘을 통해 예측 모델을 생성한다.
+ 3. 검정 데이터를 통해 분류규칙이 제대로 되었는지 모델을 평가(모형평가)한다.
+   - 모형평가란? 어떤 모형이 random하게 예측하는 모형보다 예측력이 우수한지,
+   - 그리고 고려된 여러 모형 중 어느 모형이 가장 좋은 예측력을 보유하고 있는지를 비교/분석하는 과정을 말한다.
+ 4. 모델 평가결과를 토대로 모델을 수정하거나 모델을 새로운 데이터에 적용하여 미래 결과를 예측
+ 
+### rpart 패키지를 이용한 분류분석
+
 ```{r}
 # install.packages("rpart")
 library(rpart)
 ```
+
 ### 데이터 특성 보기
 ```{r}
 str(weather)
 names(weather)
 ```
+
 ### 분류분석 - 의사결정트리 생성
 ```{r}
 # RainTomorrow 컬럼을 y변수로 지정
@@ -180,7 +320,7 @@ weather.df <- rpart(RainTomorrow ~., data=weather[, c(-1, -14)], cp=0.01)
 ### 분류분석의 시각화
 
 ```{r}
-X11() # 차트를 띄울 별도의 창 생성
+# X11() # 차트를 띄울 별도의 창 생성
 plot(weather.df) # 트리 프레임 보임
 text(weather.df, use.n = T, cex=0.7) # 텍스트 추가
 post(weather.df, file="") # 타원제공 - rpart 패키지 제공 
@@ -213,3 +353,5 @@ weather_pred2 <- ifelse(weather_pred[,2] >= 0.5, 'Yes', 'No' )
 table(weather_pred2, weather$RainTomorrow)
 (278 + 53) / nrow(weather)
 ```
+
+ - y 변수의 범주로 코딩 변경한 변수를 대상으로 원형 데이터의 y변수와 혼돈 매트릭스를 작성하여 분류정확도를 계산

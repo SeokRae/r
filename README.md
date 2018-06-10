@@ -59,4 +59,6 @@ RainTomorrow(내일 비 여부)
 
 ![img](https://t1.daumcdn.net/cfile/tistory/994656425B1DB0BD12) 
 
-![img](https://t1.daumcdn.net/cfile/tistory/99BDDA3A5B1DB0BD14) 
+![img](https://t1.daumcdn.net/cfile/tistory/99BDDA3A5B1DB0BD14)
+
+<a href="weather/doc/weather.html" >정리</a>
